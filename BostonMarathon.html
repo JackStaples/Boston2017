@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8"/>
+		<title>Boston Marathon</title>
+		<script src="https://d3js.org/d3.v4.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/4.5.1/pixi.min.js"></script>
+	</head>
+	<style>
+	#well canvas{
+		position:absolute;
+		left:84px;
+		top:25px;
+	}
+	</style>
+	<body>
+	<div id='well'></div>
+	<script>
+		console.time("concatenation");
+		var data = d3.csv('./marathon_results_2017.csv', function(data){
+			var property = Object.keys(data[0]);
+			var well = document.getElementById('well');
+			var width = well.offsetWidth;
+			var height = 600;
+			
+			var parseTime = d3.timeParse("%H:%M:%S");
+			var timeFormat = d3.timeFormat("%H:%M:%S");
+			
+			var x = d3.scaleTime()
+				.domain([parseTime(data[0][property[18]]),parseTime(data[data.length-1][property[18]])])
+				.range([0,width-150]);
+			x.nice();
+			
+			var yMin = parseTime(data[0][property[8]]);
+			var yMax = parseTime(data[data.length-1][property[8]]);
+			
+			for (var i = 0; i < 100; i++){
+				if (parseTime(data[i][property[8]]) < yMin){
+					yMin = parseTime(data[i][property[8]]);
+				}
+				if (parseTime(data[data.length-1-i][property[8]]) > yMax){
+					yMax = parseTime(data[data.length-1-i][property[8]]);
+				}
+			}
+			
+			var y = d3.scaleTime()
+				.domain([yMin, yMax])
+				.range([height,0]);
+			y.nice();
+			
+			var chart = d3.select(well)
+				.append('svg:svg')
+				.attr('width', width)
+				.attr('height', height)
+				.attr('class', 'chart');
+					
+			var main = chart.append('g')
+				.attr('transform', 'translate(' + 75 + ',' + 15 + ')');
+				
+			var xAxis = d3.axisBottom(x)
+				.tickFormat(timeFormat);
+				
+			main.append('g')
+				.attr('transform', 'translate(0,' + (height - 35) + ')')
+				.attr('class', 'main axis')
+				.call(xAxis);
+    
+			var yAxis = d3.axisLeft(y)
+				.tickFormat(timeFormat);
+			
+			main.append('g')	
+				.attr('class', 'main axis')
+				.call(yAxis);
+				
+				
+			let app = new PIXI.Application({width: width-150, height: height-35, transparent: true});
+			well.appendChild(app.view);
+			
+			for (var i = 0; i < data.length - 1; i++){
+				drawDot(x(parseTime(data[i][property[18]])), y(parseTime(data[i][property[8]])), data[i][property[4]], app)
+			}
+			console.timeEnd("concatenation");
+		});
+		
+		function drawDot(xVal, yVal, gender, app){
+			dot = new PIXI.Sprite(PIXI.Texture.WHITE);
+			if (gender === "M"){
+				dot.tint = 0x063fe3;
+			}
+			else{
+				dot.tint = 0xff00f0;
+			}		
+			dot.width=2;
+			dot.height=2;
+			dot.x = xVal;
+			dot.y = yVal;
+			app.stage.addChild(dot);
+			
+		}
+	</script>
+	</body>
+</html>	
+	
+	
